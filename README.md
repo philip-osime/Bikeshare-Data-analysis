@@ -18,6 +18,18 @@ Dataset is extracted for the last 12 upload monthly versions beginning from Nove
 ## Complete Project
 The complete render version of this portfolio project can be found in [Rpub/Bikeshare Project](https://rpubs.com/Donphosa/850133).
 
+
+ Data Summary 
+ 
+## Results
+
++ Annual members account for 54.3% of the total rides taken between November 2020 and October 2021 while casual riders account for 45.7% of total rides.
++ Annual member riders show consistent number of rides throughout the week. 
++ This could be because most annual member riders make use of the bike share for work purposes.
++ The casual members account for 56.86% of rides on saturday and sunday. This could be an indication that most casual members use the bike share services in the weekend mostly for recreational purposes.
++ The average duration of trip for the causal rider is 34 minutes while the average duration of trip for the annual member is 14 minutes.
+
+
 # Recommendations
 
 ## 1. Create an annual weekend membership. 
