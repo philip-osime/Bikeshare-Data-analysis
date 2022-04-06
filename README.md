@@ -17,6 +17,7 @@ Dataset is extracted for the last 12 upload monthly versions beginning from Nove
 
 ## Complete Project
 The complete render version of this portfolio project can be found in [Rpub/Bikeshare Project](https://rpubs.com/Donphosa/850133).
+![](https://github.com/philip-osime/Bikeshare-Data-analysis/blob/main/Image_cyclist_membership.png)
 
 
  Data Summary 
