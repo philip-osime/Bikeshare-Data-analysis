@@ -1,0 +1,268 @@
+---
+title: " Bike Ride Data Analytic Capstone Project"
+author: "Philip Aiwaneose Osime"
+date: "22/12/2021"
+output:
+  html_document: default
+  tml_document: default
+  pdf_document: default
+  word_document: default
+---
+# Business Task
+
+The business task of this project is to convert casual members into annual members.
+
+### Key Questions
+- How do casual members and annual member use the bike share differently, if at all?
+- Why would a casual member buy the annual membership?
+- How can cyclist use digital media to influence casual members to become annual members?
+
+## Steps for data cleaning and visualization of the datasets
+
+This is the capstone project for the data cleaning,data manipulation and data visualization using R notebook. 
+The dataset used for this project is extracted from Motivate International Inc with the inclusion of the data source link;{https://divvy-tripdata.s3.amazonaws.com/index.html}. 
+Dataset is extracted for the last 12 upload monthly versions beginning from November 2020 to October 2021.
+
+### 1. Installing and load  library packages :
+```{r}
+options(repos = list(CRAN="http://cran.rstudio.com/"))
+install.packages("tidyverse")
+tinytex::install_tinytex()
+library(tinytex)
+library(tidyverse)
+library(janitor)
+library(lubridate)
+library(ggplot2)
+```
+### 2. Upload cyclist trip datasets(csv files) here:
+
+```{r}
+cyclist_trip_Nov_20 <- read_csv("cyclist_trip_11_2020.csv")
+cyclist_trip_Dec_20 <- read_csv("cyclist_trip_12_2020.csv")
+cyclist_trip_Jan_21 <- read_csv("cyclist_trip_01_2021.csv")
+cyclist_trip_Feb_21 <- read_csv("cyclist_trip_02_2021.csv")
+cyclist_trip_Mar_21 <- read_csv("cyclist_trip_03_2021.csv")
+cyclist_trip_Apr_21 <- read_csv("cyclist_trip_04_2021.csv")
+cyclist_trip_May_21 <- read_csv("cyclist_trip_05_2021.csv")
+cyclist_trip_Jun_21 <- read_csv("cyclist_trip_06_2021.csv")
+cyclist_trip_Jul_21 <- read_csv("cyclist_trip_07_2021.csv")
+cyclist_trip_Aug_21 <- read_csv("cyclist_trip_08_2021.csv")
+cyclist_trip_Sep_21 <- read_csv("cyclist_trip_09_2021.csv")
+cyclist_trip_Oct_21 <- read_csv("cyclist_trip_10_2021.csv")
+```
+### 3. Wrangle data and Combine into a Single File
+```{r}
+colnames(cyclist_trip_Nov_20)
+colnames(cyclist_trip_Dec_20)
+colnames(cyclist_trip_Jan_21)
+colnames(cyclist_trip_Feb_21)
+colnames(cyclist_trip_Mar_21)
+colnames(cyclist_trip_Apr_21)
+colnames(cyclist_trip_May_21)
+colnames(cyclist_trip_Jun_21)
+colnames(cyclist_trip_Jul_21)
+colnames(cyclist_trip_Aug_21)
+colnames(cyclist_trip_Sep_21)
+colnames(cyclist_trip_Oct_21)
+```
+### 4. Inspect dataset and view  datatype for variables in each dateset.
+```{r}
+str(cyclist_trip_Nov_20)
+str(cyclist_trip_Dec_20)
+str(cyclist_trip_Jan_21)
+str(cyclist_trip_Feb_21)
+str(cyclist_trip_Mar_21)
+str(cyclist_trip_Apr_21)
+str(cyclist_trip_May_21)
+str(cyclist_trip_Jun_21)
+str(cyclist_trip_Jul_21)
+str(cyclist_trip_Aug_21)
+str(cyclist_trip_Sep_21)
+str(cyclist_trip_Oct_21)
+```
+### 5. Change datatype for the start_station_id and end_station_id for cyclsit_trip_Nov_20 dataset.
+
+```{r}
+cyclist_trip_Nov_20 <- cyclist_trip_Nov_20 %>%
+  mutate(start_station_id = as.character(start_station_id), end_station_id = as.character(end_station_id))
+str(cyclist_trip_Nov_20)
+```
+### 6. Bind cyclist_trip datasets into one large file
+
+```{r}
+cyclist_project_21 <- bind_rows(cyclist_trip_Nov_20,cyclist_trip_Dec_20,cyclist_trip_Jan_21,cyclist_trip_Feb_21,cyclist_trip_Mar_21,cyclist_trip_Apr_21,cyclist_trip_May_21,cyclist_trip_Jun_21,cyclist_trip_Jul_21,cyclist_trip_Aug_21,cyclist_trip_Sep_21,cyclist_trip_Oct_21)
+```
+### 7. Removing the latitude and longitude columns
+
+```{r}
+cyclist_project_21 <- cyclist_project_21 %>%
+  select(-c(start_lat,start_lng,end_lat,end_lng))
+head(cyclist_project_21)
+```
+### 8. Clean Up and Add data to Prepare For Analysis
+```{r}
+summary(cyclist_project_21)
+nrow(cyclist_project_21)
+dim(cyclist_project_21)
+
+```
+
+### 9. Add columns that list the date, month, and year of each ride 
+### 10. This will allow us to aggregrate ride data for each month, day, or year... before completing these operations we could only aggregate at the ride level.
+
+```{r}
+cyclist_project_21$date <- as.Date(cyclist_project_21$started_at)
+cyclist_project_21$month <- format(as.Date(cyclist_project_21$date), "%m")
+cyclist_project_21$day <- format(as.Date(cyclist_project_21$date), "%d")
+cyclist_project_21$year <- format(as.Date(cyclist_project_21$date), "%Y")
+cyclist_project_21$day_of_week <- format(as.Date(cyclist_project_21$date),"%A")
+```
+
+###  11. Add a "ride_length" calculation to cyclist_project_21(in seconds)
+```{r}
+cyclist_project_21$ride_length <- difftime(cyclist_project_21$ended_at,cyclist_project_21$started_at)
+```
+###  12. Convert "ride_length" from Factor to numeric so we can run calculations on the data
+```{r}
+is.factor(cyclist_project_21$ride_length)
+cyclist_project_21$ride_length <- as.numeric(as.character(cyclist_project_21$ride_length))
+is.numeric(cyclist_project_21)
+head(cyclist_project_21$ride_length)
+```
+
+### 13. Remove "bad" data
+-- The dataframe includes a few hundred entries when bikes were taken out of docks and checked for quality by Divy or where  ride_length was negative 
+```{r}
+cyclist_project_21_v2 <- cyclist_project_21[!(cyclist_project_21$start_station_name == "HR QR" | cyclist_project_21$ride_length < 0),]
+```
+### 14. Conduct Descriptive Analysis
+__ Descriptive analysis on the ride_length
+
+```{r}
+Average_trip_length <- mean(cyclist_project_21_v2$ride_length,na.rm = TRUE)
+Median_trip_length <- median(cyclist_project_21_v2$ride_length, na.rm = TRUE)
+Longest_trip_length <- max(cyclist_project_21_v2$ride_length, na.rm = TRUE)
+Shortest_trip_length <- min(cyclist_project_21_v2$ride_length, na.rm = TRUE)
+head(Average_trip_length)
+# we can alternatively use the summary function to get the four statistics fields above
+summary(cyclist_project_21_v2$ride_length)
+```
+### 15. Compare members and casual users
+```{r}
+aggregate(cyclist_project_21_v2$ride_length ~ cyclist_project_21_v2$member_casual, FUN = mean)
+aggregate(cyclist_project_21_v2$ride_length ~ cyclist_project_21_v2$member_casual, FUN = median)
+aggregate(cyclist_project_21_v2$ride_length ~ cyclist_project_21_v2$member_casual, FUN = max)
+aggregate(cyclist_project_21_v2$ride_length ~ cyclist_project_21_v2$member_casual, FUN = min)
+
+```
+
+### 16. See the average ride time by each day for members vs casual users
+```{r}
+aggregate(cyclist_project_21_v2$ride_length~cyclist_project_21_v2$member_casual + cyclist_project_21_v2$day_of_week, FUN = mean)
+```
+### 17. Order the days of the week
+
+```{r}
+cyclist_project_21_v2$day_of_week <- ordered(cyclist_project_21_v2$day_of_week, levels = c("Sunday","Monday","Tuesday","Wednesday","Thursday", "Friday","Saturday"))
+# rerun step 16 again:
+aggregate(cyclist_project_21_v2$ride_length~cyclist_project_21_v2$member_casual + cyclist_project_21_v2$day_of_week, FUN = mean)
+
+```
+### 18. Total Number of Rides, Average Trip length. The total trip length on the weekends 
+
+```{r}
+cyclist_project_21_v2 %>%
+  mutate(weekday = wday(started_at, label = TRUE)) %>%
+  group_by(member_casual)%>%
+  summarize(number_of_rides = n(), average_duration = mean(ride_length))%>%
+  arrange(member_casual)%>%
+  drop_na()
+
+cyclist_project_21_v2 %>%
+  mutate(weekday = wday(started_at, label = TRUE)) %>%
+  group_by(member_casual)%>%
+  filter(day_of_week == "Saturday"| day_of_week == "Sunday") %>%
+  summarize(number_of_rides = n(), average_duration = mean(ride_length))%>%
+  arrange(member_casual)%>%
+  drop_na()
+
+```
+
++ we can see casual members on the average ride for a longer time than the annual members.
++ The annual members take more rides than the casual riders in total.
+
+
+
+### 19. Visualize the number of rides by rider type
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(lubridate)
+library(tidyr)
+readable_y_axis_unit <- function(x){
+  output <- paste0(x/1000, "k")
+}
+cyclist_project_21_v2 %>%
+  mutate(weekday = wday(started_at, label = TRUE)) %>%
+  group_by(member_casual,weekday)%>%
+  summarize(number_of_rides = n(), average_duration = mean(ride_length))%>%
+  arrange(member_casual,weekday)%>%
+  drop_na()%>%
+  ggplot(aes(x=weekday, y= number_of_rides, fill = member_casual)) +
+  geom_col(position = "dodge") +
+  labs(title = "Number of trip rides per day per membership status ",subtitle = "Casual members vs Annual members",caption =paste0("The data between November 2020 and October 2021") , x=" The Days of the Week", y = "The Total Number of Rides", fill = "Membership type") + scale_y_continuous(labels = readable_y_axis_unit)
+```
+
+### 20. Visualization of the average duration of all trips by days of week
+
+```{r}
+add_secs <- function(x){
+  output <- paste0(x, "sec")
+  return(output)
+}
+cyclist_project_21_v2 %>%
+  mutate(weekday = wday(started_at, label = TRUE)) %>%
+  group_by(member_casual, weekday)%>%
+  summarize(number_of_rides = n(), average_duration = mean(ride_length, na.rm = TRUE)) %>%
+  arrange(member_casual,weekday)%>%
+  drop_na() %>%
+  ggplot(aes(x = weekday, y = average_duration, fill = member_casual)) +
+  geom_col(position = "dodge") + labs(title ="Average duration of all trips by days of the week", subtitle = "Casual members vs Annual members",caption =paste0("The data between November 2020 and October 2021") , x=" The Days of the Week", y = "average trip duration", fill = "Membership type")  + scale_y_continuous(labels = add_secs )
+```
+### 21. Export Summary File For Further Analysis
+creating a csv file that we can visualize in Excel, Tableau, or presentation  Software.
+```{r}
+counts <- aggregate(cyclist_project_21_v2$ride_length ~ cyclist_project_21_v2$member_casual + cyclist_project_21_v2$day_of_week, FUN = mean)
+
+write.csv(counts,'avg_ride_length.csv')
+
+```
+# Data Summary 
+ 
+## Results
+
++ Annual members account for 54.3% of the total rides taken between November 2020 and October 2021 while casual riders account for 45.7% of total rides.
++ Annual member riders show consistent number of rides throughout the week. 
++ This could be because most annual member riders make use of the bike share for work purposes.
++ The casual members account for 56.86% of rides on saturday and sunday. This could be an indication that most casual members use the bike share services in the weekend mostly for recreational purposes.
++ The average duration of trip for the causal rider is 34 minutes while the average duration of trip for the annual member is 14 minutes.
+
+# Recommendations
+
+## 1. Create an annual weekend membership. 
+Giving one weekend free trial period to increase the number of casual riders signing up for an annual plan.
+One free month for members who recommend riders plans. This to increase the total number of riders .
+
+## 2. Engage the casual riders 
+Produce an ad that target casual weekend riders as more casual riders make trips on weekends, giving 15% promotion bonus to casual riders that sign up for the annual membership plan.
+
+## 3. Create a survey to investigate why casual riders are not signing up for annual plan
+Create shorts surveys asking what will make casual riders sign up for an annual plan.
+
+## 4. Target highest traffic routes for advertisement
+Run an ad campaign  to target residence of high traffic congestion; enlisting the benefits of taking up an annual plan to make their life stress free and always be on time for work and appointments.
+
+
+
+
